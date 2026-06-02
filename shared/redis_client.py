@@ -201,6 +201,30 @@ class RedisClient:
         """Check whether a result key exists (race-condition fallback)."""
         return bool(await self.redis.exists(f"result:{request_id}"))
 
+    # ── Worker Registry ─────────────────────────────────────────────────
+
+    async def register_worker(self, worker_id: str, model_id: str, ttl: int = 15) -> None:
+        """Register a worker heartbeat with a time-to-live.
+        
+        Args:
+            worker_id: The unique ID of the worker.
+            model_id: The model this worker is serving.
+            ttl: Time in seconds before this registration expires.
+        """
+        key = f"worker:{worker_id}"
+        await self.redis.set(key, model_id, ex=ttl)
+
+    async def get_active_models(self) -> set[str]:
+        """Scan active workers and return the set of currently served models."""
+        models = set()
+        # In a real huge cluster, scan is better than keys, but keys is fine for portfolio
+        keys = await self.redis.keys("worker:*")
+        for key in keys:
+            model = await self.redis.get(key)
+            if model:
+                models.add(model)
+        return models
+
     # ── Pub/Sub ─────────────────────────────────────────────────────────
 
     async def publish_result_ready(self, request_id: str) -> None:

@@ -16,6 +16,7 @@ from typing import Any
 
 from shared.redis_client import RedisClient
 from worker.config import get_settings
+from worker.heartbeat import heartbeat_loop
 from worker.model_runner import ModelRunner
 
 logger = logging.getLogger("coreai.worker")
@@ -38,6 +39,7 @@ class WorkerDaemon:
         )
         self.runner = ModelRunner(model_id=self.settings.model_id, device=self.settings.device)
         self._shutdown = False
+        self._heartbeat_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Start the worker daemon."""
@@ -50,6 +52,15 @@ class WorkerDaemon:
         logger.info("Worker '%s' connected to Redis.", self.settings.worker_id)
         
         self.setup_signal_handlers()
+        
+        # Start heartbeat
+        self._heartbeat_task = asyncio.create_task(
+            heartbeat_loop(
+                self.redis,
+                self.settings.worker_id,
+                self.settings.model_id,
+            )
+        )
         
         await self.loop()
 
@@ -82,6 +93,9 @@ class WorkerDaemon:
                 logger.exception("Error in worker loop")
                 await asyncio.sleep(1)
                 
+        if self._heartbeat_task:
+            self._heartbeat_task.cancel()
+            
         await self.redis.disconnect()
         logger.info("Worker '%s' shut down successfully.", self.settings.worker_id)
 

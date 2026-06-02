@@ -45,6 +45,7 @@ from gateway.services.queue_service import (
     enqueue_inference_task,
     get_task_result,
 )
+from gateway.services.registry_service import get_available_models
 from gateway.services.result_service import TimeoutException, wait_for_inference_result
 from shared.redis_client import RedisClient
 
@@ -335,11 +336,17 @@ async def get_task_status_route(task_id: str) -> TaskStatusResponse:
     summary="List available models",
 )
 async def list_models() -> ModelListResponse:
-    """Return the catalog of models currently served by the platform.
-
-    **Stub**: Returns a static list.  In Phase 6 this will be driven by
-    the worker registry and heartbeat data in Redis.
+    """Return the catalog of models currently served by active workers.
+    
+    If Redis is unavailable, returns a static fallback list.
     """
+    if _redis_client is not None:
+        models = await get_available_models(_redis_client)
+        if models:
+            return ModelListResponse(data=models)
+
+    # ── Fallback ───────────────────────────────────────────────────────
+    logger.warning("Falling back to static model list.")
     return ModelListResponse(
         data=[
             ModelInfo(id="gpt-2"),
