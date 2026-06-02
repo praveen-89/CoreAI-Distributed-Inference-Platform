@@ -84,11 +84,13 @@ class WorkerDaemon:
         logger.info("Entering polling loop for queue:'%s'", self.settings.model_id)
         while not self._shutdown:
             try:
-                task = await self.redis.dequeue_task(self.settings.model_id, timeout=1)
+                task, raw_payload = await self.redis.dequeue_task(
+                    self.settings.model_id, self.settings.worker_id, timeout=1
+                )
                 if not task:
                     continue
                 
-                await self.process_task(task)
+                await self.process_task(task, raw_payload)
             except Exception:
                 logger.exception("Error in worker loop")
                 await asyncio.sleep(1)
@@ -99,7 +101,7 @@ class WorkerDaemon:
         await self.redis.disconnect()
         logger.info("Worker '%s' shut down successfully.", self.settings.worker_id)
 
-    async def process_task(self, task: dict[str, Any]) -> None:
+    async def process_task(self, task: dict[str, Any], raw_payload: str) -> None:
         """Execute a single inference task and report the result."""
         request_id = task.get("request_id")
         if not request_id:
@@ -146,6 +148,14 @@ class WorkerDaemon:
         except Exception as e:
             logger.exception("Failed to process task '%s'", request_id)
             await self.redis.set_task_status(request_id, "FAILED", extra={"error": str(e)})
+        finally:
+            # Always acknowledge the task so it isn't retried if we explicitly handled it
+            # (Success or explicit Failure). If the worker crashes mid-processing,
+            # this won't run, leaving the task in the processing queue for the reaper.
+            if raw_payload:
+                await self.redis.acknowledge_task(
+                    self.settings.model_id, self.settings.worker_id, raw_payload
+                )
 
 
 if __name__ == "__main__":

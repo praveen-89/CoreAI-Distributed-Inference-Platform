@@ -19,6 +19,7 @@ shutdown.  Queue enqueuing and async task state are handled by the
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -49,6 +50,7 @@ from gateway.services.queue_service import (
 from gateway.services.registry_service import get_available_models
 from gateway.services.result_service import TimeoutException, wait_for_inference_result
 from shared.redis_client import RedisClient
+from shared.reliability import reaper_loop
 
 # ---------------------------------------------------------------------------
 #  Logger
@@ -106,9 +108,16 @@ async def lifespan(app: FastAPI):
         password=settings.redis_password,
         db=settings.redis_db,
     )
+
+    # We will store the reaper task so we can cancel it later
+    reaper_task: asyncio.Task | None = None
+
     try:
         await _redis_client.connect()
         logger.info("Redis connection pool initialised.")
+        
+        # Start the reliability reaper in the background
+        reaper_task = asyncio.create_task(reaper_loop(_redis_client))
     except Exception:
         logger.warning(
             "Could not connect to Redis at %s:%s – gateway will run in degraded mode.",
@@ -120,6 +129,9 @@ async def lifespan(app: FastAPI):
     yield
 
     # ── Teardown ───────────────────────────────────────────────────────
+    if reaper_task:
+        reaper_task.cancel()
+        
     if _redis_client is not None:
         await _redis_client.disconnect()
     logger.info("CoreAI Gateway shutting down.")

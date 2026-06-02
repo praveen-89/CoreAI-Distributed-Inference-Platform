@@ -129,22 +129,34 @@ class RedisClient:
         """Return the number of pending tasks in a model queue."""
         return await self.redis.llen(f"queue:{model}")
 
-    async def dequeue_task(self, model: str, timeout: int = 1) -> dict[str, Any] | None:
-        """Block and pop a task from the queue.
+    async def dequeue_task(
+        self, model: str, worker_id: str, timeout: int = 1
+    ) -> tuple[dict[str, Any], str] | tuple[None, None]:
+        """Block and reliably pop a task from the queue into a processing queue.
         
         Args:
             model: Model identifier.
+            worker_id: The ID of the worker pulling this task.
             timeout: Seconds to block waiting for an item.
             
         Returns:
-            The parsed JSON task dictionary, or None if the timeout expired.
+            A tuple of (parsed JSON task dict, raw string payload),
+            or (None, None) if the timeout expired.
         """
         queue_key = f"queue:{model}"
-        result = await self.redis.brpop([queue_key], timeout=timeout)
-        if result:
-            _queue, payload_str = result
-            return json.loads(payload_str)
-        return None
+        processing_key = f"processing:{model}:{worker_id}"
+        
+        # BRPOPLPUSH blocks until an item is available, pops it, and pushes it to processing_key atomically.
+        # Note: aioredis >= 2.0 provides bzpopmin/etc, but for lists brpoplpush is standard.
+        payload_str = await self.redis.brpoplpush(queue_key, processing_key, timeout=timeout)
+        if payload_str:
+            return json.loads(payload_str), payload_str
+        return None, None
+
+    async def acknowledge_task(self, model: str, worker_id: str, raw_payload: str) -> None:
+        """Remove a completed task from the worker's processing queue."""
+        processing_key = f"processing:{model}:{worker_id}"
+        await self.redis.lrem(processing_key, 1, raw_payload)
 
     # ── Async Task State (Hash) ─────────────────────────────────────────
 

@@ -84,7 +84,7 @@ class TestWorkerDaemon:
             "temperature": 0.7,
         }
 
-        await daemon.process_task(task)
+        await daemon.process_task(task, raw_payload='{"request_id": "req-123"}')
 
         # Verify state updates
         mock_redis_client.set_task_status.assert_any_call("req-123", "PROCESSING")
@@ -135,7 +135,7 @@ class TestWorkerDaemon:
             "messages": [],
         }
 
-        await daemon.process_task(task)
+        await daemon.process_task(task, raw_payload='{"request_id": "req-123"}')
 
         # Verify failure state recorded
         mock_redis_client.set_task_status.assert_any_call(
