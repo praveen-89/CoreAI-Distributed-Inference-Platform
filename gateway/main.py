@@ -45,6 +45,7 @@ from gateway.services.queue_service import (
     enqueue_inference_task,
     get_task_result,
 )
+from gateway.services.result_service import TimeoutException, wait_for_inference_result
 from shared.redis_client import RedisClient
 
 # ---------------------------------------------------------------------------
@@ -204,9 +205,28 @@ async def create_chat_completion(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Server is at capacity. Please retry later.",
             )
-        logger.info("Request '%s' enqueued. Returning stub until Phase 5.", request_id)
+        logger.info("Request '%s' enqueued. Waiting for result...", request_id)
 
-    # ── Stub response until result retrieval (Phase 5) ─────────────────
+        try:
+            result_dict = await wait_for_inference_result(
+                _redis_client,
+                request_id,
+                timeout=settings.sync_request_timeout,
+            )
+            return ChatCompletionResponse(**result_dict)
+        except TimeoutException as e:
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail=str(e),
+            )
+        except RuntimeError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e),
+            )
+
+    # ── Fallback if Redis is unavailable ───────────────────────────────
+    logger.warning("Redis not available. Returning stub response.")
     return ChatCompletionResponse(
         model=payload.model,
         choices=[
