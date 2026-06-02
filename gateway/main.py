@@ -26,6 +26,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from gateway.config import GatewaySettings, get_settings
+from gateway.monitoring import get_metrics, metrics_middleware
 from gateway.schemas import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -137,6 +138,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Register prometheus metrics middleware
+app.middleware("http")(metrics_middleware)
 
 
 # ---------------------------------------------------------------------------
@@ -381,6 +385,16 @@ async def health_check() -> HealthResponse:
         version="1.0.0",
         redis_connected=redis_ok,
     )
+
+
+@app.get(
+    "/metrics",
+    tags=["Diagnostics"],
+    summary="Prometheus metrics",
+)
+async def metrics_route() -> Response:
+    """Expose Prometheus metrics for scraping."""
+    return get_metrics()
 
 
 # ---------------------------------------------------------------------------
