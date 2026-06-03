@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Phase 9 Reliability Tests
+Distributed Inference Platform - Phase 9 Reliability Tests
 """
 
 from __future__ import annotations

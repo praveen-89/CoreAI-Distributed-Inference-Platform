@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Pydantic Request / Response Schemas
+Distributed Inference Platform - Pydantic Request / Response Schemas
 
 Defines the data contracts for all API Gateway endpoints. These schemas
 enforce strict input validation via Pydantic v2 and generate automatic

@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Phase 7 Monitoring Tests
+Distributed Inference Platform - Phase 7 Monitoring Tests
 """
 
 from __future__ import annotations

@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Phase 6 Registry Tests
+Distributed Inference Platform - Phase 6 Registry Tests
 """
 
 from __future__ import annotations

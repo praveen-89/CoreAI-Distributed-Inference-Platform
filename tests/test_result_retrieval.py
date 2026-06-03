@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Phase 5 Result Retrieval Tests
+Distributed Inference Platform - Phase 5 Result Retrieval Tests
 """
 
 from __future__ import annotations

@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - API Gateway (FastAPI Application)
+Distributed Inference Platform - API Gateway (FastAPI Application)
 
 This module is the primary entrypoint for the API Gateway service.  It
 wires together all HTTP routes, middleware, and lifecycle hooks.

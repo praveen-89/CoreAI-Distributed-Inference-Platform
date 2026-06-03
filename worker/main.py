@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Worker Daemon
+Distributed Inference Platform - Worker Daemon
 
 Long-running Python process that starts up, loads a PyTorch model into memory,
 and continuously polls the Redis queue for inference tasks.

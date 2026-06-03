@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Phase 4 Worker Tests
+Distributed Inference Platform - Phase 4 Worker Tests
 """
 
 from __future__ import annotations

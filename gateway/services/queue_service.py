@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Queue Service
+Distributed Inference Platform - Queue Service
 
 Provides the gateway-side logic for enqueuing inference requests into
 Redis and managing async task state.  This module acts as the bridge

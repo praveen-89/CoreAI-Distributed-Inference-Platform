@@ -1,1 +1,1 @@
-# CoreAI Distributed Inference Platform - Shared Package
+# Distributed Inference Platform - Shared Package

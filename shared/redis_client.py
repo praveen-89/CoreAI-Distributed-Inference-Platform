@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Shared Redis Client
+Distributed Inference Platform - Shared Redis Client
 
 Provides a centralised, async Redis connection pool and a high-level
 helper class for all Redis operations used across the platform (gateway,

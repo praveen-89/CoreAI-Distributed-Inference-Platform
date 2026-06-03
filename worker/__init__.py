@@ -1,1 +1,1 @@
-# CoreAI Distributed Inference Platform - Worker Package
+# Distributed Inference Platform - Worker Package

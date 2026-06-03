@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Worker Heartbeat
+Distributed Inference Platform - Worker Heartbeat
 
 Provides a background task that periodically registers the worker's
 liveliness and supported model in Redis. This allows the gateway to

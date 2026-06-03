@@ -1,72 +1,105 @@
-# CoreAI Distributed Inference Platform
+# Distributed Inference Platform
 
-The **CoreAI Distributed Inference Platform** is a simplified, high-performance, Azure OpenAI-style inference serving platform built using Python, FastAPI, PyTorch, and Redis. It demonstrates the decoupling of user-facing ingress gateways from heavy compute model execution workers using an asynchronous queuing architecture.
+This is a distributed inference platform I built to serve PyTorch models with high performance. It uses FastAPI for the user-facing gateway and Redis for asynchronous task queuing, which completely decouples the heavy inference workloads from the API ingestion layer.
 
----
+## How to Run This Project
 
-## Key Technical Features
+Follow these steps to run the platform locally using Docker.
 
-* **Asynchronous Decoupled Ingestion**: FastAPI gateways accept incoming requests, validate payloads, and offload them to Redis list-based task queues.
-* **Competing Consumers pattern**: Standard worker daemons written in Python/PyTorch pull tasks from queues, execute inference, and store results back to Redis.
-* **Real-time Results Delivery**: The gateway uses Redis Pub/Sub to await and stream execution results back to the waiting client, maintaining standard synchronous HTTP request-response compatibility.
-* **Fault Tolerance & Reliability**: Task state checking and queue re-queuing patterns are used to recover from worker crash failure modes without dropping messages.
-* **Prometheus Metrics**: Exposes endpoints scraping system-level performance data including queue depth, API latency, and worker counts.
+### 1. Prerequisites
+* Docker and Docker Compose installed on your system.
+* Python 3.12 (optional, if you want to run tests locally outside Docker).
 
----
+### 2. Start the Platform
+To bring up the entire stack (API Gateway, Redis, Inference Worker, and Prometheus for monitoring), run:
+```bash
+docker compose up --build -d
+```
+This will start:
+* **Redis** on port 6379 (Task Queue and Pub/Sub).
+* **API Gateway** on port 8000.
+* **Worker Daemon** (Runs in the background, executing tasks).
+* **Prometheus** on port 9090 (Metrics scraping).
 
-## Directory Structure
+### 3. Architecture & Workflow
 
-```text
-├── .env.example            # Environment configurations blueprint
-├── pyproject.toml          # Project metadata, Python 3.12 dependencies, Ruff/Pytest settings
-├── PRD.md                  # Product Requirements Document
-├── ARCHITECTURE.md         # High-level architecture and sequence flow specifications
-├── DOCUMENTATION.md        # Technical API schema specifications and monitoring details
-├── IMPLEMENTATION_PLAN.md  # Step-by-step roadmap for execution phases
-│
-├── gateway/                # FastAPI Ingress Gateway service
-│   └── __init__.py
-├── worker/                 # PyTorch inference worker daemon service
-│   └── __init__.py
-├── shared/                 # Common modules (Redis client, schemas, utilities)
-│   └── __init__.py
-├── docker/                 # Container files (Dockerfiles, compose setup)
-│   └── README.md
-├── docs/                   # Additional operational guides and documentation assets
-│   └── README.md
-└── tests/                  # Test suite directories (unit and integration tests)
-    └── __init__.py
+Here is the high-level architecture of how requests are processed:
+
+```mermaid
+graph TD
+    Client[Client] -->|HTTP POST| Gateway[FastAPI Gateway]
+    Gateway -->|Enqueue Task| Redis[Redis Queue]
+    Redis -->|Dequeue Task| Worker[PyTorch Worker]
+    Worker -->|Execute Model| Worker
+    Worker -->|Save Result| Redis
+    Gateway -->|Poll/Subscribe| Redis
+    Gateway -->|Return HTTP Response| Client
+    Prometheus[Prometheus] -->|Scrape /metrics| Gateway
 ```
 
----
+And the sequence of operations for an inference request:
 
-## Local Development & Setup
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant G as FastAPI Gateway
+    participant R as Redis
+    participant W as PyTorch Worker
+    
+    C->>G: POST /v1/chat/completions
+    G->>G: Validate API Key
+    G->>R: Push task to queue
+    G->>R: Subscribe to result
+    R-->>W: Worker polls queue
+    W->>W: Run ML Inference
+    W->>R: Publish result
+    R-->>G: Receive result
+    G-->>C: HTTP 200 OK (Response)
+```
 
-### Prerequisites
-* Python 3.12+
-* Docker & Docker Compose
-* Redis Server (for local running outside docker)
+### 4. Test the API
 
-### Installing Dependencies
-1. Set up a Python virtual environment:
+The API is secured with a default API key. In PowerShell, `curl` is an alias for `Invoke-WebRequest`. You can query the available models like this:
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/v1/models" -Headers @{Authorization="Bearer sk-coreai-development-key-2026"}
+```
+
+You can submit a chat completion request to the gateway using this command:
+```powershell
+Invoke-WebRequest -Method POST -Uri "http://localhost:8000/v1/chat/completions" `
+  -Headers @{
+      "Content-Type" = "application/json"
+      "Authorization" = "Bearer sk-coreai-development-key-2026"
+  } `
+  -Body '{"model": "gpt-2", "messages": [{"role": "user", "content": "Hello, how are you?"}]}'
+```
+
+### 5. Viewing Metrics
+I've wired up Prometheus to scrape metrics from the gateway. You can view them by navigating to:
+[http://localhost:9090](http://localhost:9090)
+
+### 5. Shutting Down
+When you're done, you can stop all services and remove the containers:
+```bash
+docker compose down
+```
+
+## Running Tests Locally
+If you want to run the test suite:
+1. Create a virtual environment and activate it:
    ```bash
    python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   # Windows:
+   .\.venv\Scripts\activate
    ```
 2. Install dependencies:
    ```bash
    pip install -e .[dev]
    ```
+3. Run Pytest:
+   ```bash
+   pytest
+   ```
 
-### Linting & Formatting (Ruff)
-Ruff is configured in `pyproject.toml`. To check linting or formatting:
-```bash
-ruff check .
-ruff format . --check
-```
-
-### Running Tests
-To run unit and integration tests:
-```bash
-pytest
-```
+---
+*Created by Praveen Gupta*

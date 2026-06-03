@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Monitoring & Metrics
+Distributed Inference Platform - Monitoring & Metrics
 
 Defines Prometheus metrics for observability and a middleware to automatically
 record HTTP request latencies and counts.

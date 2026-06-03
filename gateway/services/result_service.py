@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Result Service
+Distributed Inference Platform - Result Service
 
 Provides synchronous waiting for asynchronous inference results using
 Redis Pub/Sub. When a client calls ``POST /v1/chat/completions``, the

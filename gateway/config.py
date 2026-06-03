@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Gateway Configuration
+Distributed Inference Platform - Gateway Configuration
 
 Loads all gateway-level environment variables using python-dotenv and exposes
 them as a validated Pydantic Settings object. Every service component imports

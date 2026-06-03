@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - PyTorch Model Runner
+Distributed Inference Platform - PyTorch Model Runner
 
 Handles the loading and execution of HuggingFace Transformers models.
 """

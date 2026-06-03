@@ -3,7 +3,7 @@
 
 | Status | Draft |
 | :--- | :--- |
-| **Author** | Senior Principal Engineer, CoreAI Team |
+| **Author** | Praveen Gupta |
 | **Target Version** | v1.0.0 |
 | **Date** | June 2, 2026 |
 

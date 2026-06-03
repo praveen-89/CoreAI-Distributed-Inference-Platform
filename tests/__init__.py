@@ -1,1 +1,1 @@
-# CoreAI Distributed Inference Platform - Test Suite
+# Distributed Inference Platform - Test Suite

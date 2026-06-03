@@ -1,1 +1,1 @@
-# CoreAI Distributed Inference Platform - Gateway Services Package
+# Distributed Inference Platform - Gateway Services Package

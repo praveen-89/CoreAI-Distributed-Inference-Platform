@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Reliability & Crash Recovery
+Distributed Inference Platform - Reliability & Crash Recovery
 
 Implements a background "reaper" process that detects crashed workers
 by comparing the `processing:*:*` queues against the active worker

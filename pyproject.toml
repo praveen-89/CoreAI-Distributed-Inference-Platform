@@ -9,7 +9,7 @@ description = "A simplified, high-performance Azure OpenAI style inference servi
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-    { name = "CoreAI Team", email = "coreai-eng@microsoft.com" }
+    { name = "Praveen Gupta", email = "praveen@example.com" }
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",

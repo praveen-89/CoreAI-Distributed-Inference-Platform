@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Worker Configuration
+Distributed Inference Platform - Worker Configuration
 
 Loads all worker-level environment variables using python-dotenv and exposes
 them as a validated Pydantic Settings object.

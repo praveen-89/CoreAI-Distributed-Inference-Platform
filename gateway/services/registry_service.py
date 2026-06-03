@@ -1,5 +1,5 @@
 """
-CoreAI Distributed Inference Platform - Registry Service
+Distributed Inference Platform - Registry Service
 
 Provides functionality to query the currently active workers from Redis
 to determine which models are available for serving.
