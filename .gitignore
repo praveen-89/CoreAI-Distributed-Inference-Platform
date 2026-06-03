@@ -158,3 +158,4 @@ models/
 *.pt
 *.pth
 *.onnx
+.env.example
